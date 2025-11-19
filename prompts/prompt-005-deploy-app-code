@@ -12,4 +12,6 @@ Make sure app.zip or any .zip files are not excluded by the gitignore file so yo
 Make sure the app.zip folder unzips to give app folder that has dll file inside it,
 do not add another folder level in between like publish folder or other.
 
+to be clear you must avoid this issue: "The issue is that the files are in an app/ subdirectory within the zip file. Azure App Service expects the files to be at the root of the zip."
+
 make it clear to the user somewhere that the URL to view the app is <app url>/Index so they dont just navigate to the root url
