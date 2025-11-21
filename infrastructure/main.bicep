@@ -21,6 +21,7 @@ module appService 'app-service.bicep' = {
   params: {
     location: location
     managedIdentityId: managedIdentity.outputs.managedIdentityId
+    managedIdentityPrincipalId: managedIdentity.outputs.managedIdentityPrincipalId
   }
 }
 
@@ -38,8 +39,10 @@ module sqlDatabase 'sql-database.bicep' = {
 
 output appServiceName string = appService.outputs.appServiceName
 output appServiceUrl string = appService.outputs.appServiceUrl
+output appServicePrincipalId string = appService.outputs.appServicePrincipalId
 output sqlServerFqdn string = sqlDatabase.outputs.sqlServerFqdn
 output databaseName string = sqlDatabase.outputs.databaseName
 output connectionString string = sqlDatabase.outputs.connectionString
 output managedIdentityClientId string = managedIdentity.outputs.managedIdentityClientId
 output managedIdentityName string = managedIdentity.outputs.managedIdentityName
+output managedIdentityPrincipalId string = managedIdentity.outputs.managedIdentityPrincipalId
