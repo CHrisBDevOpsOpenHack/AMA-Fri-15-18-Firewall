@@ -1,14 +1,32 @@
 const express = require('express');
 const path = require('path');
+const rateLimit = require('express-rate-limit');
 const db = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
 
+// Rate limiting for API endpoints
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.'
+});
+
+// Rate limiting for static pages
+const pageLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 500, // Limit each IP to 500 page views per windowMs
+  message: 'Too many requests from this IP, please try again later.'
+});
+
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
+
+// Apply rate limiting to API routes
+app.use('/api/', apiLimiter);
 
 // Initialize database connection
 db.initializeConnection().catch(err => {
@@ -225,16 +243,16 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Serve HTML pages
-app.get('/', (req, res) => {
+// Serve HTML pages with rate limiting
+app.get('/', pageLimiter, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.get('/approve', (req, res) => {
+app.get('/approve', pageLimiter, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'approve.html'));
 });
 
-app.get('/add', (req, res) => {
+app.get('/add', pageLimiter, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'add.html'));
 });
 
