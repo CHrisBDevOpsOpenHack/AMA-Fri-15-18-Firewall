@@ -5,5 +5,16 @@ prompt-001-create-app-service,
 prompt-017-create-managed-identity,
 prompt-002-create-azure-sql,
 prompt-008-use-existing-db,
+prompt-004-create-app-code,
+prompt-005-deploy-app-code,
+prompt-007-add-api-code,
+prompt-016-python-for-sql,
+prompt-009-create-genai-resources,
+prompt-010-add-chat-ui,
+prompt-020-model-function-calling,
+prompt-018-extra-genai-instructions,
+prompt-003-combined-genai-functions,
+prompt-019-chatui-deploy-file,
+prompt-011-azure-services-diagram
 
 If the agent cant find the exact named matching file it should not try to make up any text or code and skip to the next one
