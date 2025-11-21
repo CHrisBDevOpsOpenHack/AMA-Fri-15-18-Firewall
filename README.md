@@ -25,7 +25,8 @@ A modern expense management system demonstrating how to modernize legacy desktop
 
 That's it! The script will:
 - ✅ Create all Azure resources (App Service, SQL Database, Managed Identity)
-- ✅ Import the database schema
+- ✅ Import the database schema using Azure Deployment Scripts (Azure-native method)
+- ✅ Grant managed identity permissions automatically
 - ✅ Configure secure authentication
 - ✅ Display your application URL
 

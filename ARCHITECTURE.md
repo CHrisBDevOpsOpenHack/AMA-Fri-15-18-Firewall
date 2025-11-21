@@ -169,7 +169,7 @@
         ├─► 3. Deploy Bicep Template (main.bicep)
         │      │
         │      ├─► managed-identity.bicep
-        │      │   • User-Assigned MI created
+        │      │   • User-Assigned MI created (mid-AppModAssist-DD-HH-MM)
         │      │
         │      ├─► app-service.bicep
         │      │   • App Service Plan (B1)
@@ -179,18 +179,17 @@
         │          • SQL Server (AD auth only)
         │          • Database (Northwind)
         │          • Firewall rules
+        │          • **Azure Deployment Script** (Azure-native method)
+        │            ├─► Install sqlcmd in container
+        │            ├─► Get Azure AD token
+        │            ├─► Import database schema automatically
+        │            └─► Grant MI database permissions
         │
-        ├─► 4. Import Database Schema
-        │      az sql db query (schema.sql)
-        │
-        ├─► 5. Grant MI Database Permissions
-        │      CREATE USER, db_datareader, db_datawriter
-        │
-        ├─► 6. Configure App Service Settings
+        ├─► 4. Configure App Service Settings
         │      • SQL_CONNECTION_STRING
         │      • MANAGED_IDENTITY_CLIENT_ID
         │
-        └─► 7. Display Deployment Info
+        └─► 5. Display Deployment Info
             • App Service URL
             • SQL Server FQDN
             • Database Name
