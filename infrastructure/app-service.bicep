@@ -5,6 +5,7 @@ param location string = 'uksouth'
 param appServiceName string = 'app-expense-mgmt-${uniqueString(resourceGroup().id)}'
 param appServicePlanName string = 'plan-expense-mgmt-${uniqueString(resourceGroup().id)}'
 param managedIdentityId string
+param managedIdentityPrincipalId string
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
   name: appServicePlanName
@@ -36,21 +37,11 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
     serverFarmId: appServicePlan.id
     httpsOnly: true
     siteConfig: {
-      linuxFxVersion: 'NODE|20-lts'
+      linuxFxVersion: 'DOTNETCORE|8.0'
       alwaysOn: false
       ftpsState: 'Disabled'
       minTlsVersion: '1.2'
-      appCommandLine: 'node server.js'
-      appSettings: [
-        {
-          name: 'WEBSITE_NODE_DEFAULT_VERSION'
-          value: '~20'
-        }
-        {
-          name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
-          value: 'true'
-        }
-      ]
+      appSettings: []
     }
   }
 }
@@ -58,3 +49,4 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
 output appServiceName string = appService.name
 output appServiceUrl string = 'https://${appService.properties.defaultHostName}'
 output appServiceId string = appService.id
+output appServicePrincipalId string = managedIdentityPrincipalId

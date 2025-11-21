@@ -56,17 +56,40 @@ echo "Database: $DATABASE_NAME"
 echo "Managed Identity: $MANAGED_IDENTITY_NAME"
 echo ""
 
-# Configure database using PowerShell script
-echo "Configuring database (schema import and managed identity permissions)..."
-powershell.exe -ExecutionPolicy Bypass -File configure-database.ps1 \
-  -SqlServer "$SQL_SERVER" \
-  -DatabaseName "$DATABASE_NAME" \
-  -ManagedIdentityName "$MANAGED_IDENTITY_NAME" \
-  -SchemaFile "Database-Schema/database_schema.sql" || {
-    echo "Warning: Database configuration failed. You may need to configure manually."
-    echo "Manual configuration command:"
-    echo "powershell.exe -ExecutionPolicy Bypass -File configure-database.ps1 -SqlServer $SQL_SERVER -DatabaseName $DATABASE_NAME -ManagedIdentityName $MANAGED_IDENTITY_NAME -SchemaFile Database-Schema/database_schema.sql"
-  }
+# Configure database using PowerShell script if available
+if command -v powershell.exe &> /dev/null && [ -f "configure-database.ps1" ]; then
+    echo "Configuring database using PowerShell script..."
+    powershell.exe -ExecutionPolicy Bypass -File configure-database.ps1 \
+      -SqlServer "$SQL_SERVER" \
+      -DatabaseName "$DATABASE_NAME" \
+      -ManagedIdentityName "$MANAGED_IDENTITY_NAME" \
+      -SchemaFile "Database-Schema/database_schema.sql" || {
+        echo "Warning: PowerShell database configuration failed. Trying Python method..."
+    }
+fi
+
+# Try Python-based SQL configuration (cross-platform)
+echo "Installing Python dependencies..."
+pip3 install --quiet pyodbc azure-identity 2>/dev/null || echo "Warning: Failed to install Python packages"
+
+echo "Configuring database and managed identity permissions..."
+# Create a copy of the template and update it
+cp script.sql script-configured.sql
+sed -i.bak "s/MANAGED-IDENTITY-NAME/$MANAGED_IDENTITY_NAME/g" script-configured.sql
+rm -f script-configured.sql.bak 2>/dev/null || true
+
+# Run Python script to grant permissions
+python3 run-sql.py "$SQL_SERVER" "$DATABASE_NAME" "Database-Schema/database_schema.sql" || {
+    echo "Warning: Database schema import failed."
+}
+
+# Grant managed identity permissions
+python3 run-sql.py "$SQL_SERVER" "$DATABASE_NAME" "script-configured.sql" || {
+    echo "Warning: Managed identity permission grant failed."
+}
+
+# Clean up temporary file
+rm -f script-configured.sql 2>/dev/null || true
 
 # Configure App Service settings
 echo "Configuring App Service settings..."
@@ -77,19 +100,34 @@ az webapp config appsettings set \
     "SQL_CONNECTION_STRING=$CONNECTION_STRING" \
     "MANAGED_IDENTITY_CLIENT_ID=$MANAGED_IDENTITY_CLIENT_ID"
 
+# Build and deploy the C# application
+echo "Building C# application..."
+cd src-csharp
+dotnet publish -c Release -o ../publish
+
+echo "Creating deployment package..."
+cd ../publish
+zip -r ../app.zip . -x "*.pdb" > /dev/null
+cd ..
+
+echo "Deploying application to Azure..."
+az webapp deploy \
+  --resource-group $RESOURCE_GROUP \
+  --name $APP_SERVICE_NAME \
+  --src-path ./app.zip \
+  --type zip
+
 echo ""
 echo "=================================="
-echo "Next Steps:"
+echo "Deployment Successful!"
 echo "=================================="
-echo "1. Deploy application code:"
-echo "   ./deploy-app.sh $APP_SERVICE_NAME $RESOURCE_GROUP"
 echo ""
-echo "2. Visit your app: $APP_SERVICE_URL"
+echo "Application URL: $APP_SERVICE_URL"
+echo "  - Main page: $APP_SERVICE_URL/"
+echo "  - API Docs: $APP_SERVICE_URL/swagger"
+echo "  - Health Check: $APP_SERVICE_URL/api/health"
 echo ""
-echo "3. View logs:"
-echo "   az webapp log tail --name $APP_SERVICE_NAME --resource-group $RESOURCE_GROUP"
-echo ""
-echo "4. Check health:"
-echo "   curl $APP_SERVICE_URL/api/health"
+echo "View logs:"
+echo "  az webapp log tail --name $APP_SERVICE_NAME --resource-group $RESOURCE_GROUP"
 echo ""
 echo "=================================="
