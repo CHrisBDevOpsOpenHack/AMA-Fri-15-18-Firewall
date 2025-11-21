@@ -1,0 +1,127 @@
+@page
+@model ApproveModel
+@{
+    ViewData["Title"] = "Approve Expenses";
+}
+
+<div class="container-fluid">
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <strong>Database Connection Issue:</strong> @Model.ErrorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Pending Expenses</h1>
+        <a href="/" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left"></i> Back to My Expenses
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="pendingExpensesTable">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>Submitted</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        async function loadPendingExpenses() {
+            try {
+                const response = await fetch('/api/expenses/pending');
+                const result = await response.json();
+                
+                const tbody = document.querySelector('#pendingExpensesTable tbody');
+                tbody.innerHTML = '';
+                
+                if (result.data && result.data.length > 0) {
+                    result.data.forEach(expense => {
+                        const row = document.createElement('tr');
+                        const expenseDate = new Date(expense.expenseDate).toLocaleDateString('en-GB');
+                        const submittedDate = expense.submittedAt ? new Date(expense.submittedAt).toLocaleDateString('en-GB') : '-';
+                        
+                        row.innerHTML = `
+                            <td>${expense.userName}</td>
+                            <td>${expenseDate}</td>
+                            <td>${expense.categoryName}</td>
+                            <td>${expense.description || '-'}</td>
+                            <td>${expense.formattedAmount}</td>
+                            <td>${submittedDate}</td>
+                            <td>
+                                <button class="btn btn-sm btn-success me-1" onclick="approveExpense(${expense.expenseId})">
+                                    <i class="bi bi-check-circle"></i> Approve
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="rejectExpense(${expense.expenseId})">
+                                    <i class="bi bi-x-circle"></i> Reject
+                                </button>
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No pending expenses</td></tr>';
+                }
+            } catch (error) {
+                console.error('Error loading pending expenses:', error);
+            }
+        }
+        
+        async function approveExpense(id) {
+            if (!confirm('Are you sure you want to approve this expense?')) return;
+            
+            try {
+                const response = await fetch(`/api/expenses/${id}/approve`, { method: 'POST' });
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Expense approved successfully!');
+                    loadPendingExpenses();
+                } else {
+                    alert(result.message || 'Failed to approve expense');
+                }
+            } catch (error) {
+                console.error('Error approving expense:', error);
+                alert('Failed to approve expense');
+            }
+        }
+        
+        async function rejectExpense(id) {
+            if (!confirm('Are you sure you want to reject this expense?')) return;
+            
+            try {
+                const response = await fetch(`/api/expenses/${id}/reject`, { method: 'POST' });
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Expense rejected successfully!');
+                    loadPendingExpenses();
+                } else {
+                    alert(result.message || 'Failed to reject expense');
+                }
+            } catch (error) {
+                console.error('Error rejecting expense:', error);
+                alert('Failed to reject expense');
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', loadPendingExpenses);
+    </script>
+}
