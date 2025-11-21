@@ -22,6 +22,9 @@ Successfully modernized a legacy desktop expense management application into a c
    - Azure AD-only authentication (MCAPS compliant)
    - Firewall rules for Azure services
    - Database named "Northwind"
+   - **Azure Deployment Scripts for schema import** (Azure-native method)
+   - Automatic managed identity permission grants
+   - Built-in retry mechanism for SQL server readiness
 
 4. **Main Orchestration** (main.bicep)
    - Coordinates all resource deployments
@@ -55,10 +58,10 @@ Successfully modernized a legacy desktop expense management application into a c
 
 1. **deploy.sh** (120 lines)
    - One-command infrastructure deployment
-   - Automatic schema import using Azure CLI
-   - Managed identity permission grants
+   - Automatic Azure Deployment Scripts execution
    - App Service configuration
    - Displays all outputs and next steps
+   - No PowerShell dependency (fully Azure-native)
 
 2. **deploy-app.sh** (48 lines)
    - Automated application packaging
@@ -164,7 +167,7 @@ Successfully modernized a legacy desktop expense management application into a c
 
 ## Files Created/Modified
 
-### New Files (18)
+### New Files (19)
 ```
 .gitignore
 DEPLOYMENT.md
@@ -175,7 +178,8 @@ infrastructure/
   ├── main.bicep
   ├── app-service.bicep
   ├── sql-database.bicep
-  └── managed-identity.bicep
+  ├── managed-identity.bicep
+  └── schema-import.sh (Azure Deployment Script)
 src/
   ├── package.json
   ├── server.js
@@ -194,11 +198,11 @@ README.md (complete rewrite)
 
 ## Code Metrics
 
-- **Total Lines**: 1,080 lines of code
-- **Bicep**: 185 lines (4 files)
+- **Total Lines**: 1,167 lines of code
+- **Bicep**: 215 lines (4 files)
+- **Bash Scripts**: 255 lines (3 files including schema-import.sh)
 - **JavaScript**: 419 lines (2 files)
 - **HTML/CSS**: 476 lines (4 files)
-- **Bash Scripts**: 168 lines (2 files)
 - **Documentation**: ~15,000 characters (3 files)
 
 ## Deployment Instructions
@@ -210,13 +214,16 @@ README.md (complete rewrite)
 
 ### What It Does
 1. Creates resource group in UK South
-2. Deploys managed identity
+2. Deploys managed identity with Day-Hour-Minute naming
 3. Deploys App Service with identity
 4. Deploys SQL Database with AD auth
-5. Imports database schema
-6. Grants managed identity permissions
-7. Configures App Service settings
-8. Displays application URL
+5. **Executes Azure Deployment Scripts** (Azure-native method)
+   - Installs sqlcmd in container
+   - Imports database schema automatically
+   - Grants managed identity permissions
+   - Includes retry mechanism and error handling
+6. Configures App Service settings
+7. Displays application URL
 
 ### Time to Deploy
 - Infrastructure: ~5-10 minutes
@@ -255,16 +262,19 @@ Based on the prompts:
 - ✅ Summary script calling all IaC files
 - ✅ Low-cost development SKU (B1)
 - ✅ UK South region
-- ✅ Managed identity with timestamp naming
+- ✅ Managed identity with Day-Hour-Minute timestamp naming
 - ✅ Azure AD-only authentication
 - ✅ Entra ID administrator configuration
 - ✅ Managed identity database access
 - ✅ Basic tier database
-- ✅ Azure native schema import
+- ✅ **Azure Deployment Scripts for schema import (Azure-native method)**
+- ✅ **sqlcmd with Azure AD authentication in deployment script**
+- ✅ **Error handling and connection testing with retry mechanism**
 - ✅ Connection with managed identity
 - ✅ Error handling with dummy data
 - ✅ Error display without code exposure
 - ✅ UI matches legacy screenshots
+- ✅ Zero npm security vulnerabilities (updated mssql and @azure/identity)
 
 ## Conclusion
 
