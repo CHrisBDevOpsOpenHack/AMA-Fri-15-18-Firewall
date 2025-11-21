@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.38.33.27573",
-      "templateHash": "10186158576914739978"
+      "templateHash": "12128976370146612750"
     }
   },
   "parameters": {
@@ -19,6 +19,9 @@
     "adminLogin": {
       "type": "string"
     }
+  },
+  "variables": {
+    "schemaContent": "\n/*\n  expenses_system.sql\n  SQL Server style schema and sample data for Expense Management System\n  Roles: Employee (can submit), Manager (can approve)\n  Currency: GBP\n  Generated: 2025-11-04\n*/\n\nSET NOCOUNT ON;\nGO\n\n-- Drop existing objects if they exist (safe for development)\nIF OBJECT_ID('dbo.Expenses', 'U') IS NOT NULL DROP TABLE dbo.Expenses;\nIF OBJECT_ID('dbo.ExpenseStatus', 'U') IS NOT NULL DROP TABLE dbo.ExpenseStatus;\nIF OBJECT_ID('dbo.ExpenseCategories', 'U') IS NOT NULL DROP TABLE dbo.ExpenseCategories;\nIF OBJECT_ID('dbo.Users', 'U') IS NOT NULL DROP TABLE dbo.Users;\nIF OBJECT_ID('dbo.Roles', 'U') IS NOT NULL DROP TABLE dbo.Roles;\nGO\n\n-- Roles\nCREATE TABLE dbo.Roles\n(\n    RoleId      INT IDENTITY(1,1) PRIMARY KEY,\n    RoleName    NVARCHAR(50) NOT NULL UNIQUE, -- 'Employee', 'Manager'\n    Description NVARCHAR(250) NULL\n);\nGO\n\n-- Users\nCREATE TABLE dbo.Users\n(\n    UserId       INT IDENTITY(1,1) PRIMARY KEY,\n    UserName     NVARCHAR(100) NOT NULL,\n    Email        NVARCHAR(255) NOT NULL UNIQUE,\n    RoleId       INT NOT NULL REFERENCES dbo.Roles(RoleId),\n    ManagerId    INT NULL, -- self-referencing to another user who is the manager\n    IsActive     BIT NOT NULL DEFAULT 1,\n    CreatedAt    DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()\n);\nGO\n\nALTER TABLE dbo.Users\nADD CONSTRAINT FK_Users_Manager FOREIGN KEY (ManagerId) REFERENCES dbo.Users(UserId);\nGO\n\n-- Expense Categories\nCREATE TABLE dbo.ExpenseCategories\n(\n    CategoryId INT IDENTITY(1,1) PRIMARY KEY,\n    CategoryName NVARCHAR(100) NOT NULL UNIQUE,\n    IsActive BIT NOT NULL DEFAULT 1\n);\nGO\n\n-- Expense Status (lookup)\nCREATE TABLE dbo.ExpenseStatus\n(\n    StatusId INT IDENTITY(1,1) PRIMARY KEY,\n    StatusName NVARCHAR(50) NOT NULL UNIQUE -- 'Draft', 'Submitted', 'Approved', 'Rejected'\n);\nGO\n\n-- Expenses\nCREATE TABLE dbo.Expenses\n(\n    ExpenseId      INT IDENTITY(1,1) PRIMARY KEY,\n    UserId         INT NOT NULL REFERENCES dbo.Users(UserId),\n    CategoryId     INT NOT NULL REFERENCES dbo.ExpenseCategories(CategoryId),\n    StatusId       INT NOT NULL REFERENCES dbo.ExpenseStatus(StatusId),\n    AmountMinor    INT NOT NULL, -- amount stored in minor units (pence) to avoid floating point issues (e.g., £12.34 -> 1234)\n    Currency       NVARCHAR(3) NOT NULL DEFAULT 'GBP',\n    ExpenseDate    DATE NOT NULL,\n    Description    NVARCHAR(1000) NULL,\n    ReceiptFile    NVARCHAR(500) NULL, -- path or blob reference depending on implementation\n    SubmittedAt    DATETIME2 NULL,\n    ReviewedBy     INT NULL REFERENCES dbo.Users(UserId), -- manager who approved/rejected\n    ReviewedAt     DATETIME2 NULL,\n    CreatedAt      DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()\n);\nGO\n\n-- Indexes to help common queries\nCREATE INDEX IX_Expenses_UserId_StatusId ON dbo.Expenses(UserId, StatusId);\nCREATE INDEX IX_Expenses_SubmittedAt ON dbo.Expenses(SubmittedAt);\nGO\n\n-- Seed lookup data\nINSERT INTO dbo.Roles (RoleName, Description) VALUES\n('Employee', 'Regular employee who can submit expenses'),\n('Manager', 'Can view and approve/reject submitted expenses');\n\nINSERT INTO dbo.ExpenseCategories (CategoryName) VALUES\n('Travel'),\n('Meals'),\n('Supplies'),\n('Accommodation'),\n('Other');\n\nINSERT INTO dbo.ExpenseStatus (StatusName) VALUES\n('Draft'),\n('Submitted'),\n('Approved'),\n('Rejected');\n\n-- Seed sample users\nINSERT INTO dbo.Users (UserName, Email, RoleId, ManagerId)\nVALUES\n('Alice Example', 'alice@example.co.uk', (SELECT RoleId FROM dbo.Roles WHERE RoleName = 'Employee'), NULL),\n('Bob Manager', 'bob.manager@example.co.uk', (SELECT RoleId FROM dbo.Roles WHERE RoleName = 'Manager'), NULL);\n\n-- Make Alice report to Bob (set manager relationship)\nUPDATE dbo.Users\nSET ManagerId = (SELECT UserId FROM dbo.Users WHERE Email = 'bob.manager@example.co.uk')\nWHERE Email = 'alice@example.co.uk';\n\n-- Seed sample expenses (amounts in pence)\nINSERT INTO dbo.Expenses (UserId, CategoryId, StatusId, AmountMinor, Currency, ExpenseDate, Description, ReceiptFile, SubmittedAt, CreatedAt)\nVALUES\n(\n    (SELECT UserId FROM dbo.Users WHERE Email = 'alice@example.co.uk'),\n    (SELECT CategoryId FROM dbo.ExpenseCategories WHERE CategoryName = 'Travel'),\n    (SELECT StatusId FROM dbo.ExpenseStatus WHERE StatusName = 'Submitted'),\n    2540, -- £25.40\n    'GBP',\n    '2025-10-20',\n    'Taxi from airport to client site',\n    '/receipts/alice/taxi_oct20.jpg',\n    SYSUTCDATETIME(),\n    SYSUTCDATETIME()\n),\n(\n    (SELECT UserId FROM dbo.Users WHERE Email = 'alice@example.co.uk'),\n    (SELECT CategoryId FROM dbo.ExpenseCategories WHERE CategoryName = 'Meals'),\n    (SELECT StatusId FROM dbo.ExpenseStatus WHERE StatusName = 'Approved'),\n    1425, -- £14.25\n    'GBP',\n    '2025-09-15',\n    'Client lunch meeting',\n    '/receipts/alice/lunch_sep15.jpg',\n    '2025-09-16T10:15:00',\n    '2025-09-15T18:30:00'\n),\n(\n    (SELECT UserId FROM dbo.Users WHERE Email = 'alice@example.co.uk'),\n    (SELECT CategoryId FROM dbo.ExpenseCategories WHERE CategoryName = 'Supplies'),\n    (SELECT StatusId FROM dbo.ExpenseStatus WHERE StatusName = 'Draft'),\n    799, -- £7.99\n    'GBP',\n    '2025-11-01',\n    'Office stationery',\n    NULL,\n    NULL,\n    SYSUTCDATETIME()\n);\n\n-- Example of approving an expense (manager action)\nINSERT INTO dbo.Expenses (UserId, CategoryId, StatusId, AmountMinor, Currency, ExpenseDate, Description, ReceiptFile, SubmittedAt, ReviewedBy, ReviewedAt, CreatedAt)\nVALUES\n(\n    (SELECT UserId FROM dbo.Users WHERE Email = 'alice@example.co.uk'),\n    (SELECT CategoryId FROM dbo.ExpenseCategories WHERE CategoryName = 'Accommodation'),\n    (SELECT StatusId FROM dbo.ExpenseStatus WHERE StatusName = 'Approved'),\n    12300, -- £123.00\n    'GBP',\n    '2025-08-10',\n    'Hotel during client visit',\n    '/receipts/alice/hotel_aug10.jpg',\n    '2025-08-11T09:00:00',\n    (SELECT UserId FROM dbo.Users WHERE Email = 'bob.manager@example.co.uk'),\n    '2025-08-12T14:30:00',\n    '2025-08-10T20:00:00'\n);\n\nGO\n\n-- Sample query: List pending submitted expenses for managers to review\n-- SELECT e.ExpenseId, u.UserName, c.CategoryName, CAST(e.AmountMinor/100.0 AS DECIMAL(10,2)) AS AmountGBP, s.StatusName, e.SubmittedAt\n-- FROM dbo.Expenses e\n-- JOIN dbo.Users u ON e.UserId = u.UserId\n-- JOIN dbo.ExpenseCategories c ON e.CategoryId = c.CategoryId\n-- JOIN dbo.ExpenseStatus s ON e.StatusId = s.StatusId\n-- WHERE s.StatusName = 'Submitted'\n-- ORDER BY e.SubmittedAt ASC;\n\n"
   },
   "resources": [
     {
@@ -42,7 +45,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.38.33.27573",
-              "templateHash": "17670767007405136489"
+              "templateHash": "17074547264983344522"
             }
           },
           "parameters": {
@@ -50,9 +53,13 @@
               "type": "string",
               "defaultValue": "[resourceGroup().location]"
             },
+            "timestamp": {
+              "type": "string",
+              "defaultValue": "[utcNow('dd-HH-mm')]"
+            },
             "identityName": {
               "type": "string",
-              "defaultValue": "[format('mid-AppModAssist-{0}', uniqueString(resourceGroup().id))]"
+              "defaultValue": "[format('mid-AppModAssist-{0}', parameters('timestamp'))]"
             }
           },
           "resources": [
@@ -104,7 +111,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.38.33.27573",
-              "templateHash": "10345926922941106366"
+              "templateHash": "5693795993471345525"
             }
           },
           "parameters": {
@@ -162,10 +169,15 @@
                   "alwaysOn": false,
                   "ftpsState": "Disabled",
                   "minTlsVersion": "1.2",
+                  "appCommandLine": "node server.js",
                   "appSettings": [
                     {
                       "name": "WEBSITE_NODE_DEFAULT_VERSION",
                       "value": "~20"
+                    },
+                    {
+                      "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",
+                      "value": "true"
                     }
                   ]
                 }
@@ -211,11 +223,17 @@
           "managedIdentityClientId": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'managedIdentityDeployment'), '2025-04-01').outputs.managedIdentityClientId.value]"
           },
+          "managedIdentityName": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'managedIdentityDeployment'), '2025-04-01').outputs.managedIdentityName.value]"
+          },
           "adminObjectId": {
             "value": "[parameters('adminObjectId')]"
           },
           "adminLogin": {
             "value": "[parameters('adminLogin')]"
+          },
+          "schemaScriptContent": {
+            "value": "[variables('schemaContent')]"
           }
         },
         "template": {
@@ -225,7 +243,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.38.33.27573",
-              "templateHash": "7614718292439689953"
+              "templateHash": "17617929539841805210"
             }
           },
           "parameters": {
@@ -244,12 +262,21 @@
             "managedIdentityClientId": {
               "type": "string"
             },
+            "managedIdentityName": {
+              "type": "string"
+            },
             "adminObjectId": {
               "type": "string"
             },
             "adminLogin": {
               "type": "string"
+            },
+            "schemaScriptContent": {
+              "type": "string"
             }
+          },
+          "variables": {
+            "$fxv#0": "#!/bin/bash\nset -e\n\necho \"Starting SQL schema import and managed identity configuration...\"\necho \"SQL Server: $SQL_SERVER\"\necho \"Database: $DATABASE_NAME\"\necho \"Managed Identity: $MANAGED_IDENTITY_NAME\"\n\n# Install sqlcmd using modern apt method (avoiding deprecated apt-key)\necho \"Installing sqlcmd...\"\ncurl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /etc/apt/trusted.gpg.d/microsoft.gpg\ncurl https://packages.microsoft.com/config/ubuntu/20.04/prod.list > /etc/apt/sources.list.d/mssql-release.list\napt-get update\nACCEPT_EULA=Y apt-get install -y mssql-tools18 unixodbc-dev\n\n# Add sqlcmd to PATH\nexport PATH=\"$PATH:/opt/mssql-tools18/bin\"\n\n# Get Azure AD access token - use SQL_RESOURCE_URL from environment\necho \"Getting Azure AD access token...\"\nTOKEN=$(az account get-access-token --resource https://${SQL_RESOURCE_URL}/ --query accessToken -o tsv)\n\n# Wait for SQL server to be ready with retry mechanism\necho \"Waiting for SQL server to be ready...\"\nMAX_RETRIES=10\nRETRY_COUNT=0\nRETRY_DELAY=15\n\nwhile [ $RETRY_COUNT -lt $MAX_RETRIES ]; do\n  if /opt/mssql-tools18/bin/sqlcmd -S $SQL_SERVER -d $DATABASE_NAME -G -P $TOKEN -C -b -Q \"SELECT 1\" > /dev/null 2>&1; then\n    echo \"SQL server is ready!\"\n    break\n  fi\n  \n  RETRY_COUNT=$((RETRY_COUNT + 1))\n  if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then\n    echo \"SQL server not ready yet. Retrying in ${RETRY_DELAY} seconds... (attempt $RETRY_COUNT/$MAX_RETRIES)\"\n    sleep $RETRY_DELAY\n  else\n    echo \"Error: SQL server failed to become ready after $MAX_RETRIES attempts\"\n    exit 1\n  fi\ndone\n\n# Test connection\necho \"Testing connection to SQL server...\"\n/opt/mssql-tools18/bin/sqlcmd -S $SQL_SERVER -d $DATABASE_NAME -G -P $TOKEN -C -b -Q \"SELECT @@VERSION\" || {\n  echo \"Error: Failed to connect to SQL server\"\n  exit 1\n}\n\n# Create schema SQL file from environment variable\necho \"Creating schema SQL file...\"\necho \"$SCHEMA_CONTENT\" > /tmp/schema.sql\n\n# Import schema\necho \"Importing database schema...\"\n/opt/mssql-tools18/bin/sqlcmd -S $SQL_SERVER -d $DATABASE_NAME -G -P $TOKEN -C -b -i /tmp/schema.sql || {\n  echo \"Error: Failed to import schema\"\n  exit 1\n}\necho \"Schema imported successfully!\"\n\n# Grant managed identity permissions\necho \"Granting managed identity permissions...\"\n/opt/mssql-tools18/bin/sqlcmd -S $SQL_SERVER -d $DATABASE_NAME -G -P $TOKEN -C -b -Q \"\nIF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = '$MANAGED_IDENTITY_NAME')\nBEGIN\n    CREATE USER [$MANAGED_IDENTITY_NAME] FROM EXTERNAL PROVIDER;\nEND\n\nALTER ROLE db_datareader ADD MEMBER [$MANAGED_IDENTITY_NAME];\nALTER ROLE db_datawriter ADD MEMBER [$MANAGED_IDENTITY_NAME];\nALTER ROLE db_ddladmin ADD MEMBER [$MANAGED_IDENTITY_NAME];\n\" || {\n  echo \"Error: Failed to grant permissions\"\n  exit 1\n}\necho \"Managed identity permissions granted successfully!\"\n\necho \"Database configuration completed successfully!\"\n"
           },
           "resources": [
             {
@@ -306,10 +333,80 @@
               "apiVersion": "2023-05-01-preview",
               "name": "[format('{0}/{1}', parameters('sqlServerName'), 'AllowClientDeploymentIP')]",
               "properties": {
-                "startIpAddress": "0.0.0.0",
-                "endIpAddress": "255.255.255.255"
+                "startIpAddress": "81.133.169.79",
+                "endIpAddress": "81.133.169.79"
               },
               "dependsOn": [
+                "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2023-01-31",
+              "name": "[format('mid-SqlDeployment-{0}', uniqueString(resourceGroup().id))]",
+              "location": "[parameters('location')]"
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.Sql/servers/{0}', parameters('sqlServerName'))]",
+              "name": "[guid(resourceId('Microsoft.Sql/servers', parameters('sqlServerName')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('mid-SqlDeployment-{0}', uniqueString(resourceGroup().id))), 'SQL DB Contributor')]",
+              "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '9b7fa17d-e63e-47b0-bb0a-15c516ac86ec')]",
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('mid-SqlDeployment-{0}', uniqueString(resourceGroup().id))), '2023-01-31').principalId]",
+                "principalType": "ServicePrincipal"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('mid-SqlDeployment-{0}', uniqueString(resourceGroup().id)))]",
+                "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Resources/deploymentScripts",
+              "apiVersion": "2023-08-01",
+              "name": "import-sql-schema",
+              "location": "[parameters('location')]",
+              "kind": "AzureCLI",
+              "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                  "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('mid-SqlDeployment-{0}', uniqueString(resourceGroup().id))))]": {}
+                }
+              },
+              "properties": {
+                "azCliVersion": "2.52.0",
+                "retentionInterval": "PT1H",
+                "timeout": "PT30M",
+                "cleanupPreference": "OnSuccess",
+                "environmentVariables": [
+                  {
+                    "name": "SQL_SERVER",
+                    "value": "[reference(resourceId('Microsoft.Sql/servers', parameters('sqlServerName')), '2023-05-01-preview').fullyQualifiedDomainName]"
+                  },
+                  {
+                    "name": "DATABASE_NAME",
+                    "value": "[parameters('databaseName')]"
+                  },
+                  {
+                    "name": "MANAGED_IDENTITY_NAME",
+                    "value": "[parameters('managedIdentityName')]"
+                  },
+                  {
+                    "name": "SCHEMA_CONTENT",
+                    "secureValue": "[parameters('schemaScriptContent')]"
+                  },
+                  {
+                    "name": "SQL_RESOURCE_URL",
+                    "value": "[environment().suffixes.sqlServerHostname]"
+                  }
+                ],
+                "scriptContent": "[variables('$fxv#0')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Sql/servers/firewallRules', parameters('sqlServerName'), 'AllowAllWindowsAzureIps')]",
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('mid-SqlDeployment-{0}', uniqueString(resourceGroup().id)))]",
+                "[extensionResourceId(resourceId('Microsoft.Sql/servers', parameters('sqlServerName')), 'Microsoft.Authorization/roleAssignments', guid(resourceId('Microsoft.Sql/servers', parameters('sqlServerName')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('mid-SqlDeployment-{0}', uniqueString(resourceGroup().id))), 'SQL DB Contributor'))]",
+                "[resourceId('Microsoft.Sql/servers/databases', parameters('sqlServerName'), parameters('databaseName'))]",
                 "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
               ]
             }

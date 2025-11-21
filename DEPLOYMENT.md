@@ -45,14 +45,15 @@ The deployment script will:
 - Create resource group
 - Deploy App Service with Managed Identity
 - Deploy Azure SQL Database with Entra ID authentication
-- Import database schema
+- **Automatically import database schema using Azure Deployment Scripts** (Azure-native method)
+- **Automatically grant managed identity permissions to the database**
 - Configure application settings
 
 ```bash
 ./deploy.sh
 ```
 
-**Note**: The script will automatically use your Azure AD credentials for SQL admin access.
+**Note**: The script will automatically use your Azure AD credentials for SQL admin access. The database schema import and managed identity configuration are now handled entirely within the Bicep deployment using Azure Deployment Scripts - no PowerShell or external tools required!
 
 ### 3. Deploy Application Code
 ```bash

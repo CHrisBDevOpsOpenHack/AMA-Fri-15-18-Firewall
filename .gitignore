@@ -26,3 +26,7 @@ Thumbs.db
 
 # Azure
 .azure/
+app.zip
+
+# Temporary files
+/tmp/

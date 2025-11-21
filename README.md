@@ -25,7 +25,8 @@ A modern expense management system demonstrating how to modernize legacy desktop
 
 That's it! The script will:
 - ✅ Create all Azure resources (App Service, SQL Database, Managed Identity)
-- ✅ Import the database schema
+- ✅ Import the database schema using Azure Deployment Scripts (Azure-native method)
+- ✅ Grant managed identity permissions automatically
 - ✅ Configure secure authentication
 - ✅ Display your application URL
 
@@ -151,11 +152,16 @@ Following microsoft.com guidance:
 
 - ✅ Infrastructure as Code (Bicep)
 - ✅ Managed Identities (no credential management)
-- ✅ Azure AD authentication
-- ✅ HTTPS enforcement
-- ✅ Principle of least privilege
-- ✅ Regional deployment
+- ✅ Azure AD authentication (Microsoft Entra)
+- ✅ HTTPS enforcement (TLS 1.2+)
+- ✅ Principle of least privilege (db_datareader, db_datawriter roles)
+- ✅ Regional deployment (UK South)
 - ✅ Resource tagging
+- ✅ Azure Deployment Scripts (Azure-native automation)
+- ✅ Transparent Data Encryption (TDE enabled by default)
+- ✅ Network security (firewall rules for Azure services)
+- ✅ Rate limiting (API protection)
+- ✅ Parameterized queries (SQL injection prevention)
 
 ## ⚠️ Important Notes
 

@@ -55,18 +55,9 @@ echo "SQL Server: $SQL_SERVER"
 echo "Database: $DATABASE_NAME"
 echo "Managed Identity: $MANAGED_IDENTITY_NAME"
 echo ""
-
-# Configure database using PowerShell script
-echo "Configuring database (schema import and managed identity permissions)..."
-powershell.exe -ExecutionPolicy Bypass -File configure-database.ps1 \
-  -SqlServer "$SQL_SERVER" \
-  -DatabaseName "$DATABASE_NAME" \
-  -ManagedIdentityName "$MANAGED_IDENTITY_NAME" \
-  -SchemaFile "Database-Schema/database_schema.sql" || {
-    echo "Warning: Database configuration failed. You may need to configure manually."
-    echo "Manual configuration command:"
-    echo "powershell.exe -ExecutionPolicy Bypass -File configure-database.ps1 -SqlServer $SQL_SERVER -DatabaseName $DATABASE_NAME -ManagedIdentityName $MANAGED_IDENTITY_NAME -SchemaFile Database-Schema/database_schema.sql"
-  }
+echo "Note: Database schema has been imported and managed identity permissions"
+echo "have been configured automatically via Azure Deployment Scripts."
+echo ""
 
 # Configure App Service settings
 echo "Configuring App Service settings..."
@@ -81,9 +72,15 @@ echo ""
 echo "=================================="
 echo "Next Steps:"
 echo "=================================="
-echo "1. Deploy application code: cd src && npm install && npm run build"
-echo "2. Deploy to App Service: az webapp deployment source config-zip --src app.zip --name $APP_SERVICE_NAME --resource-group $RESOURCE_GROUP"
-echo "3. Visit your app: $APP_SERVICE_URL"
+echo "1. Deploy application code:"
+echo "   ./deploy-app.sh $APP_SERVICE_NAME $RESOURCE_GROUP"
 echo ""
-echo "Connection String saved to App Service configuration."
+echo "2. Visit your app: $APP_SERVICE_URL"
+echo ""
+echo "3. View logs:"
+echo "   az webapp log tail --name $APP_SERVICE_NAME --resource-group $RESOURCE_GROUP"
+echo ""
+echo "4. Check health:"
+echo "   curl $APP_SERVICE_URL/api/health"
+echo ""
 echo "=================================="
