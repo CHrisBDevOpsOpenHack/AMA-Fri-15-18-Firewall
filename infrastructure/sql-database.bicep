@@ -53,7 +53,9 @@ resource allowAzureServices 'Microsoft.Sql/servers/firewallRules@2023-05-01-prev
   }
 }
 
-// Firewall rule for client deployment IP (to be updated with actual IP)
+// Firewall rule for client deployment IP
+// Note: This IP can be parameterized for flexibility across different deployment locations
+// For production, consider using Private Endpoints instead of public IP firewall rules
 resource allowClientIp 'Microsoft.Sql/servers/firewallRules@2023-05-01-preview' = {
   parent: sqlServer
   name: 'AllowClientDeploymentIP'

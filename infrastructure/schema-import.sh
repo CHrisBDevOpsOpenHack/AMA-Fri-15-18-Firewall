@@ -6,9 +6,9 @@ echo "SQL Server: $SQL_SERVER"
 echo "Database: $DATABASE_NAME"
 echo "Managed Identity: $MANAGED_IDENTITY_NAME"
 
-# Install sqlcmd
+# Install sqlcmd using modern apt method (avoiding deprecated apt-key)
 echo "Installing sqlcmd..."
-curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
+curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /etc/apt/trusted.gpg.d/microsoft.gpg
 curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list > /etc/apt/sources.list.d/mssql-release.list
 apt-get update
 ACCEPT_EULA=Y apt-get install -y mssql-tools18 unixodbc-dev
@@ -20,9 +20,27 @@ export PATH="$PATH:/opt/mssql-tools18/bin"
 echo "Getting Azure AD access token..."
 TOKEN=$(az account get-access-token --resource https://${SQL_RESOURCE_URL}/ --query accessToken -o tsv)
 
-# Wait for SQL server to be ready
+# Wait for SQL server to be ready with retry mechanism
 echo "Waiting for SQL server to be ready..."
-sleep 30
+MAX_RETRIES=10
+RETRY_COUNT=0
+RETRY_DELAY=15
+
+while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+  if /opt/mssql-tools18/bin/sqlcmd -S $SQL_SERVER -d $DATABASE_NAME -G -P $TOKEN -C -b -Q "SELECT 1" > /dev/null 2>&1; then
+    echo "SQL server is ready!"
+    break
+  fi
+  
+  RETRY_COUNT=$((RETRY_COUNT + 1))
+  if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+    echo "SQL server not ready yet. Retrying in ${RETRY_DELAY} seconds... (attempt $RETRY_COUNT/$MAX_RETRIES)"
+    sleep $RETRY_DELAY
+  else
+    echo "Error: SQL server failed to become ready after $MAX_RETRIES attempts"
+    exit 1
+  fi
+done
 
 # Test connection
 echo "Testing connection to SQL server..."

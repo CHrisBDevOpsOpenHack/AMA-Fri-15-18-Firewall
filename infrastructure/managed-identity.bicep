@@ -1,7 +1,9 @@
 // User-Assigned Managed Identity for App Service to connect to Azure SQL
-// Following prompt-017 requirements
+// Following prompt-017 requirements: naming format mid-AppModAssist-[Day-Hour-Minute]
 
 param location string = resourceGroup().location
+// Note: Using utcNow() ensures unique identity names per deployment as required by prompt-017
+// Format: DD-HH-MM (Day-Hour-Minute) - may cause conflicts if multiple deployments in same minute
 param timestamp string = utcNow('dd-HH-mm')
 param identityName string = 'mid-AppModAssist-${timestamp}'
 

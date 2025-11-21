@@ -152,11 +152,16 @@ Following microsoft.com guidance:
 
 - ✅ Infrastructure as Code (Bicep)
 - ✅ Managed Identities (no credential management)
-- ✅ Azure AD authentication
-- ✅ HTTPS enforcement
-- ✅ Principle of least privilege
-- ✅ Regional deployment
+- ✅ Azure AD authentication (Microsoft Entra)
+- ✅ HTTPS enforcement (TLS 1.2+)
+- ✅ Principle of least privilege (db_datareader, db_datawriter roles)
+- ✅ Regional deployment (UK South)
 - ✅ Resource tagging
+- ✅ Azure Deployment Scripts (Azure-native automation)
+- ✅ Transparent Data Encryption (TDE enabled by default)
+- ✅ Network security (firewall rules for Azure services)
+- ✅ Rate limiting (API protection)
+- ✅ Parameterized queries (SQL injection prevention)
 
 ## ⚠️ Important Notes
 
