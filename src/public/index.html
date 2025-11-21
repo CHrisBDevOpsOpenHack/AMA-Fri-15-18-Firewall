@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expenses - Expense Management System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">Expenses</div>
+
+        <div class="nav-links">
+            <a href="/">View Expenses</a>
+            <a href="/add">Add Expense</a>
+            <a href="/approve">Approve Expenses</a>
+        </div>
+
+        <div class="error-banner" id="errorBanner">
+            <h4>⚠️ Database Connection Error</h4>
+            <p id="errorMessage"></p>
+            <p><small>Location: <span id="errorLocation"></span></small></p>
+        </div>
+
+        <div class="content">
+            <div class="filter-section">
+                <label for="filter">Filter:</label>
+                <input type="text" id="filter" placeholder="Search expenses...">
+            </div>
+
+            <div class="scrollable-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expensesTableBody">
+                        <tr>
+                            <td colspan="4" style="text-align: center;">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="button-container">
+                <button onclick="window.location.reload()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let expenses = [];
+
+        async function loadExpenses() {
+            try {
+                const response = await fetch('/api/expenses');
+                const result = await response.json();
+
+                if (result.error) {
+                    showError(result.error);
+                }
+
+                expenses = result.data;
+                displayExpenses(expenses);
+            } catch (error) {
+                console.error('Error loading expenses:', error);
+                document.getElementById('expensesTableBody').innerHTML = 
+                    '<tr><td colspan="4" style="text-align: center; color: red;">Error loading expenses</td></tr>';
+            }
+        }
+
+        function displayExpenses(expensesList) {
+            const tbody = document.getElementById('expensesTableBody');
+            
+            if (expensesList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No expenses found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = expensesList.map(expense => {
+                const amount = formatAmount(expense.AmountMinor);
+                const date = formatDate(expense.ExpenseDate);
+                const status = expense.StatusName;
+                
+                return `
+                    <tr>
+                        <td>${date}</td>
+                        <td>${expense.CategoryName}</td>
+                        <td>${amount}</td>
+                        <td>${status}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function formatAmount(amountMinor) {
+            return `£${(amountMinor / 100).toFixed(2)}`;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        function showError(error) {
+            if (!error) return;
+            
+            const banner = document.getElementById('errorBanner');
+            const message = document.getElementById('errorMessage');
+            const location = document.getElementById('errorLocation');
+
+            message.textContent = error.message;
+            location.textContent = error.location;
+            banner.classList.add('active');
+        }
+
+        // Filter functionality
+        document.getElementById('filter').addEventListener('input', (e) => {
+            const filterText = e.target.value.toLowerCase();
+            const filtered = expenses.filter(expense => {
+                return expense.CategoryName.toLowerCase().includes(filterText) ||
+                       expense.StatusName.toLowerCase().includes(filterText) ||
+                       formatAmount(expense.AmountMinor).toLowerCase().includes(filterText) ||
+                       formatDate(expense.ExpenseDate).includes(filterText);
+            });
+            displayExpenses(filtered);
+        });
+
+        // Load expenses on page load
+        loadExpenses();
+    </script>
+</body>
+</html>

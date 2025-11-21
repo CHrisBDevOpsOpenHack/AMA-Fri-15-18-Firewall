@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Approve Expenses - Expense Management System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">Approve Expenses</div>
+
+        <div class="nav-links">
+            <a href="/">View Expenses</a>
+            <a href="/add">Add Expense</a>
+            <a href="/approve">Approve Expenses</a>
+        </div>
+
+        <div class="error-banner" id="errorBanner">
+            <h4>⚠️ Database Connection Error</h4>
+            <p id="errorMessage"></p>
+            <p><small>Location: <span id="errorLocation"></span></small></p>
+        </div>
+
+        <div class="content">
+            <h3 style="font-size: 20px; margin-bottom: 15px;">Pending expenses:</h3>
+
+            <div class="filter-section">
+                <label for="filter">Filter:</label>
+                <input type="text" id="filter" placeholder="Search expenses...">
+            </div>
+
+            <div class="scrollable-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>Amount</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expensesTableBody">
+                        <tr>
+                            <td colspan="4" style="text-align: center;">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="button-container">
+                <button onclick="approveSelected()">Approve</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let expenses = [];
+        let selectedExpenses = new Set();
+
+        async function loadExpenses() {
+            try {
+                const response = await fetch('/api/expenses/pending');
+                const result = await response.json();
+
+                if (result.error) {
+                    showError(result.error);
+                }
+
+                expenses = result.data;
+                displayExpenses(expenses);
+            } catch (error) {
+                console.error('Error loading expenses:', error);
+                document.getElementById('expensesTableBody').innerHTML = 
+                    '<tr><td colspan="4" style="text-align: center; color: red;">Error loading expenses</td></tr>';
+            }
+        }
+
+        function displayExpenses(expensesList) {
+            const tbody = document.getElementById('expensesTableBody');
+            
+            if (expensesList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No pending expenses</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = expensesList.map(expense => {
+                const amount = formatAmount(expense.AmountMinor);
+                const date = formatDate(expense.ExpenseDate);
+                const isSelected = selectedExpenses.has(expense.ExpenseId);
+                
+                return `
+                    <tr onclick="toggleSelection(${expense.ExpenseId})" style="cursor: pointer; ${isSelected ? 'background-color: #cce5ff;' : ''}">
+                        <td>${date}</td>
+                        <td>${expense.CategoryName}</td>
+                        <td>${amount}</td>
+                        <td>
+                            <input type="checkbox" 
+                                   ${isSelected ? 'checked' : ''} 
+                                   onclick="event.stopPropagation(); toggleSelection(${expense.ExpenseId})"
+                                   style="width: 20px; height: 20px; cursor: pointer;">
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function toggleSelection(expenseId) {
+            if (selectedExpenses.has(expenseId)) {
+                selectedExpenses.delete(expenseId);
+            } else {
+                selectedExpenses.add(expenseId);
+            }
+            displayExpenses(expenses);
+        }
+
+        async function approveSelected() {
+            if (selectedExpenses.size === 0) {
+                alert('Please select at least one expense to approve');
+                return;
+            }
+
+            const confirmMsg = `Are you sure you want to approve ${selectedExpenses.size} expense(s)?`;
+            if (!confirm(confirmMsg)) {
+                return;
+            }
+
+            try {
+                const promises = Array.from(selectedExpenses).map(expenseId => 
+                    fetch(`/api/expenses/${expenseId}/approve`, { method: 'POST' })
+                );
+
+                await Promise.all(promises);
+                
+                selectedExpenses.clear();
+                await loadExpenses();
+                alert('Selected expenses approved successfully!');
+            } catch (error) {
+                console.error('Error approving expenses:', error);
+                alert('Error approving expenses. Please try again.');
+            }
+        }
+
+        function formatAmount(amountMinor) {
+            return `£${(amountMinor / 100).toFixed(2)}`;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        function showError(error) {
+            if (!error) return;
+            
+            const banner = document.getElementById('errorBanner');
+            const message = document.getElementById('errorMessage');
+            const location = document.getElementById('errorLocation');
+
+            message.textContent = error.message;
+            location.textContent = error.location;
+            banner.classList.add('active');
+        }
+
+        // Filter functionality
+        document.getElementById('filter').addEventListener('input', (e) => {
+            const filterText = e.target.value.toLowerCase();
+            const filtered = expenses.filter(expense => {
+                return expense.CategoryName.toLowerCase().includes(filterText) ||
+                       formatAmount(expense.AmountMinor).toLowerCase().includes(filterText) ||
+                       formatDate(expense.ExpenseDate).includes(filterText);
+            });
+            displayExpenses(filtered);
+        });
+
+        // Load expenses on page load
+        loadExpenses();
+    </script>
+</body>
+</html>
