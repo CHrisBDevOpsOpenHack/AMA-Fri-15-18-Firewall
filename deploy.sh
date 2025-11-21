@@ -73,8 +73,10 @@ echo "Installing Python dependencies..."
 pip3 install --quiet pyodbc azure-identity 2>/dev/null || echo "Warning: Failed to install Python packages"
 
 echo "Configuring database and managed identity permissions..."
-# Update script.sql with the managed identity name
-sed -i.bak "s/MANAGED-IDENTITY-NAME/$MANAGED_IDENTITY_NAME/g" script.sql && rm -f script.sql.bak
+# Create a copy of the template and update it
+cp script.sql script-configured.sql
+sed -i.bak "s/MANAGED-IDENTITY-NAME/$MANAGED_IDENTITY_NAME/g" script-configured.sql
+rm -f script-configured.sql.bak 2>/dev/null || true
 
 # Run Python script to grant permissions
 python3 run-sql.py "$SQL_SERVER" "$DATABASE_NAME" "Database-Schema/database_schema.sql" || {
@@ -82,12 +84,12 @@ python3 run-sql.py "$SQL_SERVER" "$DATABASE_NAME" "Database-Schema/database_sche
 }
 
 # Grant managed identity permissions
-python3 run-sql.py "$SQL_SERVER" "$DATABASE_NAME" "script.sql" || {
+python3 run-sql.py "$SQL_SERVER" "$DATABASE_NAME" "script-configured.sql" || {
     echo "Warning: Managed identity permission grant failed."
 }
 
-# Restore the template
-git checkout script.sql 2>/dev/null || true
+# Clean up temporary file
+rm -f script-configured.sql 2>/dev/null || true
 
 # Configure App Service settings
 echo "Configuring App Service settings..."

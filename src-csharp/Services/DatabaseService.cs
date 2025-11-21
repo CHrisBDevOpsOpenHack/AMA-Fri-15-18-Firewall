@@ -312,6 +312,7 @@ namespace ExpenseManagementApp.Services
 
         private List<Expense> GetDummyExpenses()
         {
+            var now = DateTime.UtcNow;
             return new List<Expense>
             {
                 new Expense
@@ -321,10 +322,10 @@ namespace ExpenseManagementApp.Services
                     CategoryName = "Travel",
                     AmountMinor = 2540,
                     Currency = "GBP",
-                    ExpenseDate = DateTime.Now.AddDays(-7),
+                    ExpenseDate = now.AddDays(-7),
                     Description = "Taxi from airport to client site",
                     StatusName = "Submitted",
-                    SubmittedAt = DateTime.Now.AddDays(-7)
+                    SubmittedAt = now.AddDays(-7)
                 },
                 new Expense
                 {
@@ -333,10 +334,10 @@ namespace ExpenseManagementApp.Services
                     CategoryName = "Meals",
                     AmountMinor = 1425,
                     Currency = "GBP",
-                    ExpenseDate = DateTime.Now.AddDays(-15),
+                    ExpenseDate = now.AddDays(-15),
                     Description = "Client lunch meeting",
                     StatusName = "Approved",
-                    SubmittedAt = DateTime.Now.AddDays(-15)
+                    SubmittedAt = now.AddDays(-15)
                 },
                 new Expense
                 {
@@ -345,7 +346,7 @@ namespace ExpenseManagementApp.Services
                     CategoryName = "Supplies",
                     AmountMinor = 799,
                     Currency = "GBP",
-                    ExpenseDate = DateTime.Now.AddDays(-2),
+                    ExpenseDate = now.AddDays(-2),
                     Description = "Office stationery",
                     StatusName = "Draft"
                 }
