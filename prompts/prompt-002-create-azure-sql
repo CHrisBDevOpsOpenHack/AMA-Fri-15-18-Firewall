@@ -20,12 +20,20 @@ Create the Bicep code needed to deploy an Azure SQL Database with the following 
    - Enable firewall rule for Azure services
    - Enable firewall for client deployment IP Address
 
-5. **Schema Import Using Azure Native Methods**:
-   - Create an Azure Deployment Scripts (Microsoft.Resources/deploymentScripts) in Bicep to run the schema import as part of the infrastructure deployment
-   - Uses sqlcmd with Azure AD authentication
-   - Import the database schema
-   - Grants the already deployed managed identity permissions
-   - Includes error handling and connection testing
-   - Uses -b flag for batch mode to catch errors
+5. **Schema Import Using PowerShell Script**:
+   - Create a PowerShell script (configure-database.ps1) to run the schema import post-deployment
+   - Use sqlcmd with Azure AD authentication: `-U <username> -G -C` flags
+   - Do NOT use deployment scripts in Bicep due to Azure Policy restrictions on storage account key-based authentication
+   - The PowerShell script should:
+     - Get current Azure AD user with `az ad signed-in-user show --query userPrincipalName`
+     - Use `sqlcmd -S <server> -d <database> -U <username> -G -C` for authentication
+     - Import the database schema with `-i <schema-file>`
+     - Grant managed identity permissions with SQL commands
+     - Include error handling and connection testing
+     - Use -b flag for batch mode to catch errors
+   - The deploy.sh script should call the PowerShell script after Bicep deployment completes
 
-**Important**: The `azureADOnlyAuthentication` must be set to `true` to comply with the "[SFI-ID4.2.2] SQL DB - Safe Secrets Standard" policy enforced by MCAPS Governance.
+**Important Notes**:
+
+- The `azureADOnlyAuthentication` must be set to `true` to comply with the "[SFI-ID4.2.2] SQL DB - Safe Secrets Standard" policy enforced by MCAPS Governance.
+- Azure Deployment Scripts cannot be used due to Azure Policy blocking key-based authentication on storage accounts. Use PowerShell script approach instead.

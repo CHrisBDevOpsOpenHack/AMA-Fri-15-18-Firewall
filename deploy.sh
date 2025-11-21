@@ -55,9 +55,18 @@ echo "SQL Server: $SQL_SERVER"
 echo "Database: $DATABASE_NAME"
 echo "Managed Identity: $MANAGED_IDENTITY_NAME"
 echo ""
-echo "Note: Database schema has been imported and managed identity permissions"
-echo "have been configured automatically via Azure Deployment Scripts."
-echo ""
+
+# Configure database using PowerShell script
+echo "Configuring database (schema import and managed identity permissions)..."
+powershell.exe -ExecutionPolicy Bypass -File configure-database.ps1 \
+  -SqlServer "$SQL_SERVER" \
+  -DatabaseName "$DATABASE_NAME" \
+  -ManagedIdentityName "$MANAGED_IDENTITY_NAME" \
+  -SchemaFile "Database-Schema/database_schema.sql" || {
+    echo "Warning: Database configuration failed. You may need to configure manually."
+    echo "Manual configuration command:"
+    echo "powershell.exe -ExecutionPolicy Bypass -File configure-database.ps1 -SqlServer $SQL_SERVER -DatabaseName $DATABASE_NAME -ManagedIdentityName $MANAGED_IDENTITY_NAME -SchemaFile Database-Schema/database_schema.sql"
+  }
 
 # Configure App Service settings
 echo "Configuring App Service settings..."
