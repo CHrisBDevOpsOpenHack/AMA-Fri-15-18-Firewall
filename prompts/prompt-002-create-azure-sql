@@ -18,6 +18,7 @@ Create the Bicep code needed to deploy an Azure SQL Database with the following 
    - Create a database named 'Northwind'
    - Use Basic tier for development
    - Enable firewall rule for Azure services
+   - Enable firewall for client deployment IP Address
 
 5. **Schema Import Using Azure Native Methods**:
    - Use Azure CLI `az sql db import` command or similar native Azure tooling to import the schema
