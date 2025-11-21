@@ -28,12 +28,4 @@ Create the Bicep code needed to deploy an Azure SQL Database with the following 
    - Includes error handling and connection testing
    - Uses -b flag for batch mode to catch errors
 
-**Schema Import Best Practices**:
-- Use `az sql db query` to execute the SQL file directly against the database
-- Authenticate using the Azure AD identity of the deployer
-- Example command structure:
-  ```bash
-  az sql db query --server <server-name> --database Northwind --auth-mode ActiveDirectoryIntegrated --file "Database-Schema/Northwinds Schema.sql"
-  ```
-
 **Important**: The `azureADOnlyAuthentication` must be set to `true` to comply with the "[SFI-ID4.2.2] SQL DB - Safe Secrets Standard" policy enforced by MCAPS Governance.
