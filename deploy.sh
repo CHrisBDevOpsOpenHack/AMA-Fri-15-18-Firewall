@@ -56,39 +56,16 @@ echo "Database: $DATABASE_NAME"
 echo "Managed Identity: $MANAGED_IDENTITY_NAME"
 echo ""
 
-# Import database schema
-echo "Importing database schema..."
-SQL_SERVER_NAME=$(echo $SQL_SERVER | cut -d'.' -f1)
-
-# Wait for SQL server to be ready
-echo "Waiting for SQL server to be ready..."
-sleep 30
-
-# Execute the schema import
-echo "Executing SQL schema..."
-az sql db query \
-  --server $SQL_SERVER_NAME \
-  --database $DATABASE_NAME \
-  --auth-mode ActiveDirectoryIntegrated \
-  --query-file Database-Schema/database_schema.sql || {
-    echo "Warning: Schema import failed. You may need to import manually."
-    echo "Command: az sql db query --server $SQL_SERVER_NAME --database $DATABASE_NAME --auth-mode ActiveDirectoryIntegrated --query-file Database-Schema/database_schema.sql"
-  }
-
-# Grant managed identity access to database
-echo "Granting managed identity access to database..."
-GRANT_SQL="CREATE USER [${MANAGED_IDENTITY_NAME}] FROM EXTERNAL PROVIDER;
-ALTER ROLE db_datareader ADD MEMBER [${MANAGED_IDENTITY_NAME}];
-ALTER ROLE db_datawriter ADD MEMBER [${MANAGED_IDENTITY_NAME}];
-ALTER ROLE db_ddladmin ADD MEMBER [${MANAGED_IDENTITY_NAME}];"
-
-echo "$GRANT_SQL" | az sql db query \
-  --server $SQL_SERVER_NAME \
-  --database $DATABASE_NAME \
-  --auth-mode ActiveDirectoryIntegrated || {
-    echo "Warning: Managed identity permission grant failed. You may need to grant manually."
-    echo "SQL Command:"
-    echo "$GRANT_SQL"
+# Configure database using PowerShell script
+echo "Configuring database (schema import and managed identity permissions)..."
+powershell.exe -ExecutionPolicy Bypass -File configure-database.ps1 \
+  -SqlServer "$SQL_SERVER" \
+  -DatabaseName "$DATABASE_NAME" \
+  -ManagedIdentityName "$MANAGED_IDENTITY_NAME" \
+  -SchemaFile "Database-Schema/database_schema.sql" || {
+    echo "Warning: Database configuration failed. You may need to configure manually."
+    echo "Manual configuration command:"
+    echo "powershell.exe -ExecutionPolicy Bypass -File configure-database.ps1 -SqlServer $SQL_SERVER -DatabaseName $DATABASE_NAME -ManagedIdentityName $MANAGED_IDENTITY_NAME -SchemaFile Database-Schema/database_schema.sql"
   }
 
 # Configure App Service settings

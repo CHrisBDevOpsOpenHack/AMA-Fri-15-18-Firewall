@@ -21,12 +21,12 @@ Create the Bicep code needed to deploy an Azure SQL Database with the following 
    - Enable firewall for client deployment IP Address
 
 5. **Schema Import Using Azure Native Methods**:
-   - Use Azure CLI `az sql db import` command or similar native Azure tooling to import the schema
-   - The schema file is located at: `Database-Schema/Northwinds Schema.sql`
-   - Do NOT rely on local Python scripts or ODBC drivers for schema import
-   - The import should use Azure AD authentication
-   - Consider using Azure Deployment Scripts (Microsoft.Resources/deploymentScripts) in Bicep to run the import as part of the infrastructure deployment
-   - Alternatively, provide Azure CLI commands that can be run from Azure Cloud Shell or as part of the deployment pipeline
+   - Create an Azure Deployment Scripts (Microsoft.Resources/deploymentScripts) in Bicep to run the schema import as part of the infrastructure deployment
+   - Uses sqlcmd with Azure AD authentication
+   - Import the database schema
+   - Grants the already deployed managed identity permissions
+   - Includes error handling and connection testing
+   - Uses -b flag for batch mode to catch errors
 
 **Schema Import Best Practices**:
 - Use `az sql db query` to execute the SQL file directly against the database

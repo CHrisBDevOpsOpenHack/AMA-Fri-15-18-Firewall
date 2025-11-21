@@ -56,8 +56,8 @@ resource allowClientIp 'Microsoft.Sql/servers/firewallRules@2023-05-01-preview' 
   parent: sqlServer
   name: 'AllowClientDeploymentIP'
   properties: {
-    startIpAddress: '0.0.0.0'
-    endIpAddress: '255.255.255.255'
+    startIpAddress: '81.133.169.79'
+    endIpAddress: '81.133.169.79'
   }
 }
 
