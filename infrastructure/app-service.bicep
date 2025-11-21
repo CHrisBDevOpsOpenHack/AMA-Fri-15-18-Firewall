@@ -40,10 +40,15 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
       alwaysOn: false
       ftpsState: 'Disabled'
       minTlsVersion: '1.2'
+      appCommandLine: 'node server.js'
       appSettings: [
         {
           name: 'WEBSITE_NODE_DEFAULT_VERSION'
           value: '~20'
+        }
+        {
+          name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
+          value: 'true'
         }
       ]
     }

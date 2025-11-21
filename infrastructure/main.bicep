@@ -22,9 +22,6 @@ module appService 'app-service.bicep' = {
     location: location
     managedIdentityId: managedIdentity.outputs.managedIdentityId
   }
-  dependsOn: [
-    managedIdentity
-  ]
 }
 
 // Deploy SQL Database with managed identity access
@@ -36,9 +33,6 @@ module sqlDatabase 'sql-database.bicep' = {
     adminObjectId: adminObjectId
     adminLogin: adminLogin
   }
-  dependsOn: [
-    managedIdentity
-  ]
 }
 
 output appServiceName string = appService.outputs.appServiceName
