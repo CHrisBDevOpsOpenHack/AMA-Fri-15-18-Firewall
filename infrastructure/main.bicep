@@ -7,6 +7,9 @@ param location string = 'uksouth'
 param adminObjectId string
 param adminLogin string
 
+// Load the database schema file content
+var schemaContent = loadTextContent('../Database-Schema/database_schema.sql')
+
 // Deploy managed identity first
 module managedIdentity 'managed-identity.bicep' = {
   name: 'managedIdentityDeployment'
@@ -30,8 +33,10 @@ module sqlDatabase 'sql-database.bicep' = {
   params: {
     location: location
     managedIdentityClientId: managedIdentity.outputs.managedIdentityClientId
+    managedIdentityName: managedIdentity.outputs.managedIdentityName
     adminObjectId: adminObjectId
     adminLogin: adminLogin
+    schemaScriptContent: schemaContent
   }
 }
 

@@ -2,7 +2,8 @@
 // Following prompt-017 requirements
 
 param location string = resourceGroup().location
-param identityName string = 'mid-AppModAssist-${uniqueString(resourceGroup().id)}'
+param timestamp string = utcNow('dd-HH-mm')
+param identityName string = 'mid-AppModAssist-${timestamp}'
 
 resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: identityName
