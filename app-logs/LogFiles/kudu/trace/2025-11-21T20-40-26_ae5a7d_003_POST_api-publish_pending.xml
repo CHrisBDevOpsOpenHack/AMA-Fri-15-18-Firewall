@@ -1,0 +1,50 @@
+<step title="Incoming Request" date="2025-11-21T20:40:26.004" instance="ae5a7d" url="/api/publish?type=zip" method="POST" type="request" pid="832,1,15" Accept="*/*" Host="app-expense-mgmt-ouugfu3aoaa5u.scm.azurewebsites.net" User-Agent="AZURECLI/2.80.0 (MSI)" Accept-Encoding="gzip, deflate" Authorization="Bea..." Cache-Control="no-cache" Content-Type="application/octet-stream" Cookie="ARRAffinity=ae5a7dd9da9dd0e24870735545b509deb72b76a1f5adca5fdb6f2e673f809367; ARRAffinitySameSite=ae5a7dd9da9dd0e24870735545b509deb72b76a1f5adca5fdb6f2e673f809367" Content-Length="5772248" x-ms-client-request-id="453955b2-c71a-11f0-9443-701ab8533456" x-ms-artifact-checksum="6226724fcf7081649a1ae19ffc259a15c621b0f4a7b3826fb7f353716d2e6832" X-ARR-LOG-ID="453955b2-c71a-11f0-9443-701ab8533456" CLIENT-IP="81.133.169.79:58923" X-SITE-DEPLOYMENT-ID="app-expense-mgmt-ouugfu3aoaa5u" WAS-DEFAULT-HOSTNAME="app-expense-mgmt-ouugfu3aoaa5u.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/api/publish?type=zip" X-Client-IP="81.133.169.79" X-Client-Port="58923" >
+  <step title="Cleanup Xml Logs" date="2025-11-21T20:40:26.005" /><!-- duration: 6ms -->
+  <step title="OneDeploy" date="2025-11-21T20:40:26.566" >
+    <step title="None repository commit" date="2025-11-21T20:40:26.636" >
+      <step title="Commit id: 92b40956-7ac8-4b59-b4e7-b77e5a4ea2d3" date="2025-11-21T20:40:26.647" Message="N/A" AuthorName="N/A" AuthorEmail="N/A" /><!-- duration: 9ms -->
+    </step><!-- duration: 30ms -->
+    <step title="Starting PushDeployAsync" date="2025-11-21T20:40:26.745" /><!-- duration: 9ms -->
+    <step title="Writing artifact to /tmp/zipdeploy/29683f9d-0e86-47b1-a476-089c408b4853.zip" date="2025-11-21T20:40:26.903" >
+      <step title="Writing multipart request body to /tmp/zipdeploy/29683f9d-0e86-47b1-a476-089c408b4853.zip" date="2025-11-21T20:40:26.933" /><!-- duration: 12ms -->
+    </step><!-- duration: 1513ms -->
+    <step title="Attempting to fetch target branch HEAD" date="2025-11-21T20:40:28.481" /><!-- duration: 3ms -->
+    <step title="Acquiring Deployment Lock" date="2025-11-21T20:40:28.521" /><!-- duration: 52ms -->
+    <step title="Acquired Deployment Lock" date="2025-11-21T20:40:28.869" /><!-- duration: 9ms -->
+    <step title="Performing fetch based deployment" date="2025-11-21T20:40:28.898" >
+      <step title="Creating temporary deployment" date="2025-11-21T20:40:28.917" /><!-- duration: 330ms -->
+      <step title="Releasing Deployment Lock" date="2025-11-21T20:40:30.603" /><!-- duration: 10ms -->
+      <step title="Cleaning up temp folders from previous zip deployments and extracting pushed zip file /tmp/zipdeploy/29683f9d-0e86-47b1-a476-089c408b4853.zip (5.50 MB) to /tmp/zipdeploy/extracted" date="2025-11-21T20:40:30.683" >
+        <step title="ChmodRecursive Process exited with total time taken in ms: 299" date="2025-11-21T20:40:32.549" /><!-- duration: 13ms -->
+      </step><!-- duration: 1923ms -->
+      <step title="None repository commit" date="2025-11-21T20:40:32.672" >
+        <step title="Commit id: 92b40956-7ac8-4b59-b4e7-b77e5a4ea2d3" date="2025-11-21T20:40:32.680" Message="OneDeploy" AuthorName="N/A" AuthorEmail="N/A" /><!-- duration: 16ms -->
+      </step><!-- duration: 26ms -->
+      <step title="Deployment timer started" date="2025-11-21T20:40:34.752" >
+        <step title="DeploymentManager.Deploy(id:92b40956-7ac8-4b59-b4e7-b77e5a4ea2d3)" date="2025-11-21T20:40:34.763" >
+          <step title="Collecting changeset information" date="2025-11-21T20:40:34.846" /><!-- duration: 206ms -->
+          <step title="Updating submodules" date="2025-11-21T20:40:35.068" /><!-- duration: 1490ms -->
+          <step title="Determining deployment builder" date="2025-11-21T20:40:36.815" >
+            <step title="Builder is OneDeployBuilder" date="2025-11-21T20:40:36.832" /><!-- duration: 8ms -->
+          </step><!-- duration: 35ms -->
+          <step title="PreDeployment: context.CleanOutputPath False" date="2025-11-21T20:40:36.920" >
+            <step title="PreDeployment: context.OutputPath /home/site/wwwroot" date="2025-11-21T20:40:37.053" >
+              <step title="Building" date="2025-11-21T20:40:37.205" >
+                <step title="Executing external process" date="2025-11-21T20:40:37.669" type="process" path="starter.sh" arguments="/opt/Kudu/Scripts/parallel_rsync.sh /tmp/zipdeploy/extracted /home/site/wwwroot 8 /tmp/ False False  " /><!-- duration: 8438ms -->
+                <step title="Modified file to trigger a restart of the app container." date="2025-11-21T20:40:46.572" /><!-- duration: 1ms -->
+                <step title="Skip function trigger and logicapp sync because function is not enabled." date="2025-11-21T20:40:46.577" /><!-- duration: 12ms -->
+                <step title="Purge deployment items" date="2025-11-21T20:40:47.166" >
+                  <step title="Remove temp-5802, Failed, received at 11/21/2025 20:40:28" date="2025-11-21T20:40:47.209" /><!-- duration: 1ms -->
+                </step><!-- duration: 45ms -->
+              </step><!-- duration: 10078ms -->
+            </step><!-- duration: 10233ms -->
+            <step title="Cleaning up temp files" date="2025-11-21T20:40:47.287" /><!-- duration: 2ms -->
+            <step title="Cleaning up temp files" date="2025-11-21T20:40:47.298" /><!-- duration: 511ms -->
+            <step title="Reloading status file with latest updates" date="2025-11-21T20:40:47.825" >
+              <step title="WebHooksManager.PublishEventAsync: PostDeployment" date="2025-11-21T20:40:47.827" /><!-- duration: 129ms -->
+            </step><!-- duration: 133ms -->
+            <step title="Cleaning up temporary deployment - fetch deployment was successful" date="2025-11-21T20:40:47.964" /><!-- duration: 2ms -->
+          </step><!-- duration: 11093ms -->
+        </step><!-- duration: 13254ms -->
+        <step title="Outgoing response" date="2025-11-21T20:40:48.033" type="response" statusCode="200" statusText="OK" /><!-- duration: 1ms -->
+      </step><!-- duration: 13284ms -->

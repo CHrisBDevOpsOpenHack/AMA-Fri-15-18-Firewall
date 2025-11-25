@@ -74,19 +74,10 @@ try {
 # Grant managed identity permissions
 Write-Host ""
 Write-Host "Granting managed identity access to database..."
-$grantSql = @"
-IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = N'$ManagedIdentityName')
-BEGIN
-    CREATE USER [$ManagedIdentityName] FROM EXTERNAL PROVIDER;
-END;
-
-ALTER ROLE db_datareader ADD MEMBER [$ManagedIdentityName];
-ALTER ROLE db_datawriter ADD MEMBER [$ManagedIdentityName];
-ALTER ROLE db_ddladmin ADD MEMBER [$ManagedIdentityName];
-"@
+$grantSql = "IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = N'$ManagedIdentityName') BEGIN CREATE USER [$ManagedIdentityName] FROM EXTERNAL PROVIDER; END; ALTER ROLE db_datareader ADD MEMBER [$ManagedIdentityName]; ALTER ROLE db_datawriter ADD MEMBER [$ManagedIdentityName]; ALTER ROLE db_ddladmin ADD MEMBER [$ManagedIdentityName];"
 
 try {
-    $grantSql | sqlcmd -S $SqlServer -d $DatabaseName -U $currentUser -G -C -b
+    sqlcmd -S $SqlServer -d $DatabaseName -U $currentUser -G -C -Q $grantSql -b
     if ($LASTEXITCODE -eq 0) {
         Write-Host "[SUCCESS] Managed identity permissions granted successfully!"
     } else {

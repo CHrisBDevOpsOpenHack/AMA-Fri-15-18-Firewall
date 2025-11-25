@@ -56,40 +56,23 @@ echo "Database: $DATABASE_NAME"
 echo "Managed Identity: $MANAGED_IDENTITY_NAME"
 echo ""
 
-# Configure database using PowerShell script if available
+# Configure database using PowerShell script
+echo "Configuring database (schema import and managed identity permissions)..."
 if command -v powershell.exe &> /dev/null && [ -f "configure-database.ps1" ]; then
-    echo "Configuring database using PowerShell script..."
     powershell.exe -ExecutionPolicy Bypass -File configure-database.ps1 \
       -SqlServer "$SQL_SERVER" \
       -DatabaseName "$DATABASE_NAME" \
       -ManagedIdentityName "$MANAGED_IDENTITY_NAME" \
       -SchemaFile "Database-Schema/database_schema.sql" || {
-        echo "Warning: PowerShell database configuration failed. Trying Python method..."
+        echo "Warning: Database configuration failed. You may need to configure manually."
+        echo "Manual configuration command:"
+        echo "powershell.exe -ExecutionPolicy Bypass -File configure-database.ps1 -SqlServer $SQL_SERVER -DatabaseName $DATABASE_NAME -ManagedIdentityName $MANAGED_IDENTITY_NAME -SchemaFile Database-Schema/database_schema.sql"
     }
+else
+    echo "Warning: PowerShell or configure-database.ps1 not found. Database configuration skipped."
+    echo "Please run manually:"
+    echo "powershell.exe -ExecutionPolicy Bypass -File configure-database.ps1 -SqlServer $SQL_SERVER -DatabaseName $DATABASE_NAME -ManagedIdentityName $MANAGED_IDENTITY_NAME -SchemaFile Database-Schema/database_schema.sql"
 fi
-
-# Try Python-based SQL configuration (cross-platform)
-echo "Installing Python dependencies..."
-pip3 install --quiet pyodbc azure-identity 2>/dev/null || echo "Warning: Failed to install Python packages"
-
-echo "Configuring database and managed identity permissions..."
-# Create a copy of the template and update it
-cp script.sql script-configured.sql
-sed -i.bak "s/MANAGED-IDENTITY-NAME/$MANAGED_IDENTITY_NAME/g" script-configured.sql
-rm -f script-configured.sql.bak 2>/dev/null || true
-
-# Run Python script to grant permissions
-python3 run-sql.py "$SQL_SERVER" "$DATABASE_NAME" "Database-Schema/database_schema.sql" || {
-    echo "Warning: Database schema import failed."
-}
-
-# Grant managed identity permissions
-python3 run-sql.py "$SQL_SERVER" "$DATABASE_NAME" "script-configured.sql" || {
-    echo "Warning: Managed identity permission grant failed."
-}
-
-# Clean up temporary file
-rm -f script-configured.sql 2>/dev/null || true
 
 # Configure App Service settings
 echo "Configuring App Service settings..."
@@ -107,7 +90,8 @@ dotnet publish -c Release -o ../publish
 
 echo "Creating deployment package..."
 cd ../publish
-zip -r ../app.zip . -x "*.pdb" > /dev/null
+# Use PowerShell Compress-Archive instead of zip for Windows compatibility
+powershell.exe -Command "Compress-Archive -Path * -DestinationPath ../app.zip -Force"
 cd ..
 
 echo "Deploying application to Azure..."

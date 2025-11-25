@@ -1,17 +1,33 @@
-create a zip file for the app code so that it can be deployed to azure in the following manner:
+# Deploy App Code
 
+Create a zip file for the app code so that it can be deployed to Azure in the following manner:
+
+```bash
 az webapp deploy \
   --resource-group MyRG \
   --name MyWebApp \
   --src-path ./app.zip
+```
 
 Also add the correct terminal command to any deployment scripts you are creating or have created to deploy it.
 
-Make sure app.zip or any .zip files are not excluded by the gitignore file so you can add the app.zip file to the repo for use later in the script
+**Important Requirements:**
 
-Make sure the app.zip folder unzips to give app folder that has dll file inside it,
-do not add another folder level in between like publish folder or other.
+1. **Zip File Structure:**
+   - Make sure app.zip or any .zip files are not excluded by the gitignore file so you can add the app.zip file to the repo for use later in the script
+   - Make sure the app.zip folder unzips to give files at the root level that include the DLL file
+   - Do NOT add another folder level in between like publish folder or other
+   - **Critical:** You must avoid this issue: "The issue is that the files are in an app/ subdirectory within the zip file. Azure App Service expects the files to be at the root of the zip."
 
-to be clear you must avoid this issue: "The issue is that the files are in an app/ subdirectory within the zip file. Azure App Service expects the files to be at the root of the zip."
+2. **Startup Command:**
+   - After deploying, ensure NO startup command is set (should be empty/null)
+   - If a startup command exists, clear it with: `az webapp config set --name <app-name> --resource-group <rg> --startup-file ""`
+   - The .NET runtime will automatically find and execute the DLL without a startup command
 
-make it clear to the user somewhere that the URL to view the app is <app url>/Index so they dont just navigate to the root url
+3. **User Information:**
+   - Make it clear to the user somewhere that the URL to view the app is `<app url>/Index` so they don't just navigate to the root URL
+
+**Common Issues to Avoid:**
+
+- Do NOT set `appCommandLine` or startup commands like `node server.js` - this prevents .NET apps from starting
+- Ensure zip file contents are at root level, not in subdirectories

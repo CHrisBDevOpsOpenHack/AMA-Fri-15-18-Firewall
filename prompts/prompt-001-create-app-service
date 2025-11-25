@@ -1,4 +1,26 @@
-create the bicep code needed to deploy an app service instance to azure on alow cost development SKU in UKSOUTH.
+# Create App Service
+
+Create the Bicep code needed to deploy an App Service instance to Azure on a low cost development SKU in UKSOUTH.
+
+**Important Requirements:**
+
+1. **Runtime Configuration:**
+   - Do NOT set `appCommandLine` or startup command in the Bicep configuration
+   - Let Azure automatically detect and start the application based on the runtime stack
+   - For .NET applications, the runtime will automatically find and execute the DLL
+
+2. **App Service Plan:**
+   - Use a low-cost development SKU (B1 or F1)
+   - Location: UKSOUTH
+
+3. **Managed Identity:**
+   - Assign the user-assigned managed identity to the App Service
+   - Output the App Service's principal ID for role assignments
+
+**Common Issues to Avoid:**
+
+- Setting `appCommandLine` to `node server.js` or any other command - this will prevent .NET apps from starting
+- The container will fail with exit code 127 if the startup command references a command not available in the runtime
 
 
 
